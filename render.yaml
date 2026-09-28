@@ -1,0 +1,51 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Deploy: on render.com, click "New +" -> "Blueprint", connect this repo,
+# and Render will read this file and set everything up automatically.
+#
+# After it deploys, Render gives you a URL like
+# https://astrovastu-api.onrender.com — that's what you pass as `api_url`
+# when running the "Build Android APK" GitHub Action.
+services:
+  - type: web
+    name: astrovastu-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    disk:
+      name: astrovastu-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /data/astrovastu.db
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      # Render auto-generates and stores a strong random value for this.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 30d
+      # Turn off the passwordless demo login once real users can reach this URL.
+      - key: AUTH_DEV_LOGIN
+        value: "false"
+      # Fill these in from the Render dashboard once you have them
+      # (they're optional — the login button they control just stays
+      # hidden in the app until you set them).
+      - key: CORS_ORIGINS
+        value: ""
+      - key: GOOGLE_CLIENT_IDS
+        value: ""
+      - key: FACEBOOK_APP_ID
+        value: ""
+      - key: FACEBOOK_APP_SECRET
+        sync: false
+      - key: APPLE_AUDIENCES
+        value: com.astrovastu.app
+      - key: ANTHROPIC_API_KEY
+        sync: false
