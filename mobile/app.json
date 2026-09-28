@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "name": "AstroVastu",
+    "slug": "astrovastu",
+    "scheme": "astrovastu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "description": "Vedic astrology (Jyotish) and Vastu Shastra guidance in English, Hindi and Marathi.",
+    "ios": {
+      "bundleIdentifier": "com.astrovastu.app",
+      "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Choose a floor plan of your home for Vastu analysis.",
+        "NSCameraUsageDescription": "Take a photo of your floor plan for Vastu analysis."
+      }
+    },
+    "android": {
+      "package": "com.astrovastu.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF3DC",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFF3DC"
+        }
+      ],
+      "expo-secure-store",
+      "expo-localization",
+      "expo-web-browser",
+      "expo-apple-authentication",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a floor plan of your home for Vastu analysis.",
+          "cameraPermission": "Take a photo of your floor plan for Vastu analysis."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "apiUrl": "http://localhost:4000"
+    }
+  }
+}
