@@ -1,0 +1,52 @@
+name: Build Android APK
+
+# Manual trigger only — open the Actions tab, pick this workflow, "Run workflow".
+# Optionally pass the backend URL to embed in the build; otherwise it falls
+# back to app.json's extra.apiUrl (http://localhost:4000), which only works
+# on an emulator with adb reverse, not a real phone.
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Backend API URL to embed in the app (e.g. https://astrovastu-api.onrender.com)"
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_API_URL: ${{ github.event.inputs.api_url }}
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate native Android project (expo prebuild)
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build debug APK
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: astrovastu-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
