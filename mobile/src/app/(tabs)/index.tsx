@@ -4,10 +4,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
-import { useApi } from "@/lib/useApi";
+import { useProfile } from "@/lib/profile";
+import { listConsultations } from "@/lib/store";
+import { useLocal } from "@/lib/useApi";
 import { fmtDate } from "@/lib/format";
+import type { ConsultationSummary } from "@/lib/types";
 import { currentLang } from "@/i18n";
 import { colors, gradients, radius, shadow, space } from "@/lib/theme";
 import { Logo } from "@/components/Logo";
@@ -67,8 +68,8 @@ function ConsultCard({ title, desc, art, colorsGrad, onPress }: { title: string;
 
 export default function Home() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
-  const recent = useApi(() => api.consultations(), [], { refetchOnFocus: true });
+  const { profile } = useProfile();
+  const recent = useLocal(() => listConsultations(), [], { refetchOnFocus: true });
   const lang = currentLang();
 
   return (
@@ -80,7 +81,7 @@ export default function Home() {
             <Logo size={62} />
             <View style={{ flex: 1 }}>
               <Txt variant="caption" color={colors.goldLight}>{t("app.blessing")} · {fmtDate(new Date().toISOString(), lang, { weekday: "long", day: "numeric", month: "long" })}</Txt>
-              <Txt variant="title" color={colors.cream} numberOfLines={1}>{t("home.greeting", { name: user?.name.split(" ")[0] ?? "" })}</Txt>
+              <Txt variant="title" color={colors.cream} numberOfLines={1}>{t("home.greeting", { name: profile?.name.split(" ")[0] ?? "" })}</Txt>
             </View>
           </Row>
         </SafeAreaView>
@@ -95,14 +96,14 @@ export default function Home() {
         <LotusDivider />
         <Txt variant="caption" center style={{ fontStyle: i18n.language === "en" ? "italic" : "normal", paddingHorizontal: space.lg }}>{t("home.quote")}</Txt>
 
-        {recent.data && recent.data.items.length > 0 ? (
+        {recent.data && recent.data.length > 0 ? (
           <>
             <SectionTitle
               title={t("home.recent")}
               right={<Pressable onPress={() => router.push("/(tabs)/history")}><Txt variant="label" color={colors.saffronDeep}>{t("home.seeAll")}</Txt></Pressable>}
             />
             <Card style={{ paddingVertical: space.sm }}>
-              {recent.data.items.slice(0, 4).map((c) => <ConsultationRow key={c.id} item={c} />)}
+              {recent.data.slice(0, 4).map((c: ConsultationSummary) => <ConsultationRow key={c.id} item={c} />)}
             </Card>
           </>
         ) : null}

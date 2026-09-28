@@ -1,7 +1,7 @@
 import Svg, { Circle, Path } from "react-native-svg";
 import { colors } from "@/lib/theme";
 
-export type IconName = "home" | "history" | "user" | "chevronRight" | "chevronLeft" | "star" | "compass" | "planet" | "house" | "sparkle" | "trash" | "check" | "alert" | "globe" | "logout" | "camera" | "image" | "plus" | "minus" | "rotate" | "target" | "mail";
+export type IconName = "home" | "history" | "user" | "chevronRight" | "chevronLeft" | "star" | "compass" | "planet" | "house" | "sparkle" | "trash" | "check" | "alert" | "globe" | "logout" | "camera" | "image" | "plus" | "minus" | "rotate" | "target" | "mail" | "edit";
 
 const PATHS: Record<IconName, string> = {
   home: "M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
@@ -26,6 +26,7 @@ const PATHS: Record<IconName, string> = {
   rotate: "M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7",
   target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0-5a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0-3a1 1 0 1 0 0-2 1 1 0 0 0 0 2z",
   mail: "M3 6h18v12H3zM3 7l9 6 9-6",
+  edit: "M4 20h4l11-11-4-4L4 16zm11.5-13.5 4 4",
 };
 
 export function Icon({ name, size = 22, color = colors.maroon, strokeWidth = 1.9, filled = false }: { name: IconName; size?: number; color?: string; strokeWidth?: number; filled?: boolean }) {

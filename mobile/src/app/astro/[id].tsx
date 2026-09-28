@@ -1,9 +1,7 @@
-import { useState } from "react";
-import { Alert } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
-import { errorMessage, useApi } from "@/lib/useApi";
+import { getKundali, logActivity } from "@/lib/store";
+import { useLocal } from "@/lib/useApi";
 import { currentLang } from "@/i18n";
 import { ErrorView, Loading, Screen } from "@/components/ui";
 import { KundaliReportView } from "@/components/KundaliReportView";
@@ -11,33 +9,19 @@ import { KundaliReportView } from "@/components/KundaliReportView";
 export default function KundaliScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, i18n } = useTranslation();
-  // Re-fetch when the language changes: predictions are generated server-side per language.
-  const { data, error, loading, reload, setData } = useApi(() => api.kundali(id, currentLang()), [id, i18n.language]);
-  const [aiBusy, setAiBusy] = useState(false);
+  // Re-run when the language changes: predictions are generated fresh per language.
+  const { data, error, loading, reload } = useLocal(() => {
+    const detail = getKundali(id, currentLang());
+    if (detail) logActivity("kundali.view", { type: "kundali", id });
+    return detail;
+  }, [id, i18n.language]);
 
   if (loading && !data) return <Screen scroll={false}><Loading /></Screen>;
   if (error || !data) return <Screen scroll={false}><ErrorView message={error ?? t("common.error")} onRetry={reload} /></Screen>;
 
-  const generate = async () => {
-    setAiBusy(true);
-    try {
-      const r = await api.aiReading(id, currentLang());
-      setData({ ...data, aiReading: r.aiReading });
-    } catch (e) {
-      Alert.alert(t("common.error"), errorMessage(e, t));
-    } finally {
-      setAiBusy(false);
-    }
-  };
-
   return (
     <Screen>
-      <KundaliReportView
-        chart={data.chart}
-        report={data.report}
-        name={data.record.name}
-        ai={{ reading: data.aiReading, available: data.aiAvailable, onGenerate: generate, busy: aiBusy }}
-      />
+      <KundaliReportView chart={data.chart} report={data.report} name={data.record.name} />
     </Screen>
   );
 }

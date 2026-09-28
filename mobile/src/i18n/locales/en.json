@@ -35,22 +35,8 @@
   "auth": {
     "welcome": "Namaste 🙏",
     "subtitle": "Sign in to save your kundalis and vastu consultations",
-    "google": "Continue with Google",
-    "facebook": "Continue with Facebook",
-    "apple": "Continue with Apple",
-    "email": "Continue with Email",
-    "demo": "Try the demo",
-    "signIn": "Sign in",
-    "signUp": "Create account",
     "name": "Full name",
-    "emailLabel": "Email",
-    "password": "Password",
-    "haveAccount": "Already have an account? Sign in",
-    "noAccount": "New here? Create an account",
-    "passwordHint": "At least 8 characters",
     "terms": "By continuing you agree to our Terms and Privacy Policy.",
-    "failed": "Sign-in failed. Please try again.",
-    "invalidEmail": "Enter a valid email",
     "nameRequired": "Enter your name"
   },
   "tabs": {
@@ -90,7 +76,16 @@
     "pickDate": "Select date",
     "pickTime": "Select time",
     "dateFormat": "YYYY-MM-DD",
-    "timeFormat": "HH:MM (24h)"
+    "timeFormat": "HH:MM (24h)",
+    "enterManually": "Can't find your city? Enter it manually",
+    "manualTitle": "Enter place manually",
+    "manualNameRequired": "Enter a place name",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "invalidLatitude": "Latitude must be between -90 and 90",
+    "invalidLongitude": "Longitude must be between -180 and 180",
+    "invalidTimezone": "Enter a valid time zone, e.g. Asia/Kolkata",
+    "timezoneHint": "IANA time zone name, e.g. Asia/Kolkata, America/New_York"
   },
   "kundali": {
     "title": "Janma Kundali",
@@ -185,9 +180,6 @@
     "centerMode": "Set Brahmasthan (centre)",
     "centerDesc": "Tap the centre of the house on the plan.",
     "roomCount": "{{count}} rooms tagged",
-    "aiDetect": "Auto-detect rooms with AI",
-    "aiDetecting": "Reading your floor plan…",
-    "aiNote": "Please review the detected rooms.",
     "needRooms": "Tag at least one room to continue",
     "analyse": "Analyse Vastu",
     "score": "Vastu score",
@@ -267,21 +259,17 @@
     "loadMore": "Load more"
   },
   "activity": {
-    "auth.signup": "Joined AstroVastu",
-    "auth.login": "Signed in",
-    "auth.logout": "Signed out",
+    "profile.create": "Set up your profile",
+    "profile.update": "Updated profile",
+    "data.reset": "Reset all data",
     "kundali.create": "Created a kundali",
     "kundali.view": "Viewed a kundali",
     "kundali.delete": "Deleted a kundali",
-    "kundali.ai_reading": "Generated an AI reading",
     "vastu.create": "Analysed a floor plan",
     "vastu.view": "Viewed a vastu report",
     "vastu.delete": "Deleted a floor plan",
-    "vastu.ai_detect": "AI-detected rooms",
     "consultation.create": "Started an Astro + Vastu consultation",
-    "consultation.view": "Viewed a consultation",
-    "profile.update": "Updated profile",
-    "account.delete": "Deleted account"
+    "consultation.view": "Viewed a consultation"
   },
   "profile": {
     "title": "Profile",
@@ -290,12 +278,10 @@
     "kundalis": "Kundalis",
     "plans": "Plans",
     "consultations": "Consultations",
-    "signedInWith": "Signed in with {{providers}}",
-    "logout": "Sign out",
-    "deleteAccount": "Delete account",
-    "deleteConfirm": "This permanently deletes your account, kundalis, floor plans and history.",
-    "about": "About",
     "version": "Version {{v}}",
-    "disclaimer": "AstroVastu offers traditional guidance for reflection. It is not a substitute for professional advice."
+    "disclaimer": "AstroVastu offers traditional guidance for reflection. It is not a substitute for professional advice.",
+    "resetData": "Reset all data",
+    "resetConfirm": "This permanently deletes your name, all kundalis, floor plans and history from this device. This cannot be undone.",
+    "offlineNote": "Everything runs on this device — no account, no internet connection needed."
   }
 }

@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Image, Pressable, StyleSheet, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
-import { errorMessage } from "@/lib/useApi";
 import { colors, radius, space } from "@/lib/theme";
 import { ROOM_COLOR, ROOM_TYPES, locateZone } from "@/lib/vastu";
 import type { RoomType, VastuDraft } from "@/lib/types";
@@ -13,7 +11,7 @@ import { Icon } from "./Icon";
 import { NorthDial } from "./NorthDial";
 import { PlanCanvas } from "./PlanCanvas";
 
-const EMPTY: VastuDraft = { title: "", imageUri: null, aspectRatio: 1, northAngle: 0, center: { x: 0.5, y: 0.5 }, rooms: [], aiDetected: false };
+const EMPTY: VastuDraft = { title: "", imageUri: null, aspectRatio: 1, northAngle: 0, center: { x: 0.5, y: 0.5 }, rooms: [] };
 
 function Steps({ step }: { step: number }) {
   const { t } = useTranslation();
@@ -34,19 +32,14 @@ function Steps({ step }: { step: number }) {
 
 let nextId = 1;
 
-/** Guides the user from a floor plan image to a fully tagged VastuDraft. */
+/** Guides the user from a floor plan image to a fully tagged VastuDraft. Everything here runs on-device. */
 export function FloorPlanWizard({ onComplete, submitLabel, busy }: { onComplete: (d: VastuDraft) => void; submitLabel: string; busy?: boolean }) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [d, setD] = useState<VastuDraft>(EMPTY);
   const [roomType, setRoomType] = useState<RoomType>("kitchen");
   const [centerMode, setCenterMode] = useState(false);
-  const [aiAvailable, setAiAvailable] = useState(false);
-  const [detecting, setDetecting] = useState(false);
-  const [aiNote, setAiNote] = useState<string | null>(null);
   const update = (patch: Partial<VastuDraft>) => setD((prev) => ({ ...prev, ...patch }));
-
-  useEffect(() => { api.health().then((h) => setAiAvailable(h.ai)).catch(() => {}); }, []);
 
   const pick = async (camera: boolean) => {
     if (camera) {
@@ -58,27 +51,9 @@ export function FloorPlanWizard({ onComplete, submitLabel, busy }: { onComplete:
     if (res.canceled || !res.assets[0]) return;
     const a = res.assets[0];
     const setAsset = (w: number, h: number) =>
-      update({ imageUri: a.uri, mimeType: a.mimeType ?? "image/jpeg", aspectRatio: w && h ? w / h : 1, rooms: [], center: { x: 0.5, y: 0.5 }, aiDetected: false });
+      update({ imageUri: a.uri, mimeType: a.mimeType ?? "image/jpeg", aspectRatio: w && h ? w / h : 1, rooms: [], center: { x: 0.5, y: 0.5 } });
     if (a.width && a.height) setAsset(a.width, a.height);
     else Image.getSize(a.uri, setAsset, () => setAsset(1, 1));
-  };
-
-  const detect = async () => {
-    if (!d.imageUri) return;
-    setDetecting(true);
-    try {
-      const r = await api.detectRooms(d.imageUri, d.mimeType);
-      update({
-        rooms: r.rooms.map((x) => ({ id: `ai${nextId++}`, type: x.type, label: x.label, x: x.x, y: x.y })),
-        ...(r.northAngle != null ? { northAngle: Math.round(r.northAngle) } : {}),
-        aiDetected: true,
-      });
-      setAiNote([t("vastu.aiNote"), r.notes].filter(Boolean).join(" "));
-    } catch (e) {
-      Alert.alert(t("common.error"), errorMessage(e, t));
-    } finally {
-      setDetecting(false);
-    }
   };
 
   const onTap = (x: number, y: number) => {
@@ -150,10 +125,6 @@ export function FloorPlanWizard({ onComplete, submitLabel, busy }: { onComplete:
             <Row style={{ flexWrap: "wrap" }}>
               <Chip label={`◎ ${t("vastu.centerMode")}`} active={centerMode} color={colors.saffronDeep} onPress={() => setCenterMode(!centerMode)} />
             </Row>
-            {aiAvailable && d.imageUri ? (
-              <Button kind="secondary" icon="sparkle" title={detecting ? t("vastu.aiDetecting") : t("vastu.aiDetect")} loading={detecting} onPress={detect} />
-            ) : null}
-            {aiNote ? <Txt variant="caption" color={colors.saffronDeep}>{aiNote}</Txt> : null}
           </Card>
           <PlanCanvas
             source={source}

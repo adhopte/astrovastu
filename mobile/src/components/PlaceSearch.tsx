@@ -1,40 +1,66 @@
-import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { IANAZone } from "luxon";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
-import { currentLang } from "@/i18n";
+import { CITIES } from "@/domain/geo/cities";
 import { colors, radius, space } from "@/lib/theme";
 import type { Place } from "@/lib/types";
-import { Field } from "./ui";
+import { Button, Field } from "./ui";
 import { Txt } from "./Txt";
 import { Icon } from "./Icon";
 
 export const placeLabel = (p: Place) => [p.name, p.admin1, p.country].filter(Boolean).join(", ");
 
+/** Offline substring search over the bundled gazetteer — no network involved. */
+function searchCities(q: string): Place[] {
+  const needle = q.trim().toLowerCase();
+  if (needle.length < 2) return [];
+  return CITIES.filter((c) => c.name.toLowerCase().includes(needle) || c.admin1?.toLowerCase().startsWith(needle) || c.country.toLowerCase().includes(needle)).slice(0, 8);
+}
+
 export function PlaceSearch({ value, onSelect, error }: { value: Place | null; onSelect: (p: Place | null) => void; error?: string | null }) {
   const { t } = useTranslation();
   const [q, setQ] = useState(value ? placeLabel(value) : "");
-  const [results, setResults] = useState<Place[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const seq = useRef(0);
+  const [manual, setManual] = useState(false);
+  const [manualName, setManualName] = useState("");
+  const [lat, setLat] = useState("");
+  const [lon, setLon] = useState("");
+  const [tz, setTz] = useState("");
+  const [manualError, setManualError] = useState<string | null>(null);
+  const results = useMemo(() => (value && q === placeLabel(value) ? [] : searchCities(q)), [q, value]);
+  const searched = q.trim().length >= 2;
 
-  useEffect(() => {
-    if ((value && q === placeLabel(value)) || q.trim().length < 2) return;
-    const id = ++seq.current;
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const r = await api.searchPlaces(q.trim(), currentLang());
-        if (id === seq.current) { setResults(r.items); setSearched(true); }
-      } catch {
-        if (id === seq.current) setResults([]);
-      } finally {
-        if (id === seq.current) setLoading(false);
-      }
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [q, value]);
+  const confirmManual = () => {
+    const latitude = Number(lat);
+    const longitude = Number(lon);
+    if (!manualName.trim()) return setManualError(t("birth.manualNameRequired"));
+    if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) return setManualError(t("birth.invalidLatitude"));
+    if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) return setManualError(t("birth.invalidLongitude"));
+    if (!IANAZone.isValidZone(tz.trim())) return setManualError(t("birth.invalidTimezone"));
+    const place: Place = { name: manualName.trim(), country: "", latitude, longitude, timezone: tz.trim() };
+    onSelect(place);
+    setQ(placeLabel(place));
+    setManual(false);
+  };
+
+  if (manual) {
+    return (
+      <View style={styles.manual}>
+        <Txt variant="label">{t("birth.manualTitle")}</Txt>
+        <Field label={t("birth.place")} value={manualName} onChangeText={setManualName} placeholder={t("birth.placeHint")} />
+        <View style={{ flexDirection: "row", gap: space.sm }}>
+          <Field label={t("birth.latitude")} value={lat} onChangeText={setLat} placeholder="18.5204" keyboardType="numbers-and-punctuation" style={{ flex: 1 }} />
+          <Field label={t("birth.longitude")} value={lon} onChangeText={setLon} placeholder="73.8567" keyboardType="numbers-and-punctuation" style={{ flex: 1 }} />
+        </View>
+        <Field label={t("birth.timezone")} value={tz} onChangeText={setTz} placeholder="Asia/Kolkata" hint={t("birth.timezoneHint")} autoCapitalize="none" autoCorrect={false} />
+        {manualError ? <Txt variant="caption" color={colors.sindoor}>{manualError}</Txt> : null}
+        <View style={{ flexDirection: "row", gap: space.sm }}>
+          <Button kind="outline" title={t("common.back")} onPress={() => setManual(false)} style={{ flex: 1 }} />
+          <Button title={t("common.done")} onPress={confirmManual} style={{ flex: 1 }} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ gap: 6 }}>
@@ -45,18 +71,16 @@ export function PlaceSearch({ value, onSelect, error }: { value: Place | null; o
         onChangeText={(s) => {
           setQ(s);
           if (value) onSelect(null);
-          if (s.trim().length < 2) { seq.current++; setResults([]); setSearched(false); setLoading(false); }
         }}
         error={error}
         autoCorrect={false}
       />
-      {loading && <ActivityIndicator color={colors.saffron} style={{ alignSelf: "flex-start" }} />}
       {!value && results.length > 0 && (
         <View style={styles.list}>
           {results.map((p, i) => (
             <Pressable
               key={`${p.latitude},${p.longitude},${i}`}
-              onPress={() => { onSelect(p); setQ(placeLabel(p)); setResults([]); }}
+              onPress={() => { onSelect(p); setQ(placeLabel(p)); }}
               style={({ pressed }) => [styles.item, pressed && { backgroundColor: colors.saffronSoft }]}
             >
               <Icon name="target" size={18} color={colors.saffronDeep} />
@@ -68,8 +92,13 @@ export function PlaceSearch({ value, onSelect, error }: { value: Place | null; o
           ))}
         </View>
       )}
-      {!value && searched && !loading && results.length === 0 && <Txt variant="caption">{t("birth.noPlaces")}</Txt>}
+      {!value && searched && results.length === 0 && <Txt variant="caption">{t("birth.noPlaces")}</Txt>}
       {value && <Txt variant="caption" color={colors.tulsi}>✓ {value.latitude.toFixed(3)}°, {value.longitude.toFixed(3)}° · {t("birth.timezone")}: {value.timezone}</Txt>}
+      {!value && (
+        <Pressable onPress={() => { setManualName(q); setManual(true); }} hitSlop={6} style={{ alignSelf: "flex-start" }}>
+          <Txt variant="label" color={colors.saffronDeep}>{t("birth.enterManually")}</Txt>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -77,4 +106,5 @@ export function PlaceSearch({ value, onSelect, error }: { value: Place | null; o
 const styles = StyleSheet.create({
   list: { backgroundColor: colors.white, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, overflow: "hidden" },
   item: { flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  manual: { gap: space.sm, backgroundColor: colors.white, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: space.md },
 });

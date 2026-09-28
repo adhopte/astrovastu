@@ -9,13 +9,13 @@ import { YatraOne_400Regular } from "@expo-google-fonts/yatra-one";
 import { Mukta_400Regular, Mukta_500Medium, Mukta_600SemiBold, Mukta_700Bold } from "@expo-google-fonts/mukta";
 import { useTranslation } from "react-i18next";
 import { restoreLanguage } from "@/i18n";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { ProfileProvider, useProfile } from "@/lib/profile";
 import { colors, fonts } from "@/lib/theme";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootStack() {
-  const { ready } = useAuth();
+  const { ready } = useProfile();
   const { t, i18n } = useTranslation();
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
@@ -35,8 +35,7 @@ function RootStack() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="email-auth" options={{ title: t("auth.email") }} />
+      <Stack.Screen name="welcome" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="astro/new" options={{ title: t("home.astro") }} />
       <Stack.Screen name="astro/[id]" options={{ title: t("kundali.title") }} />
@@ -50,18 +49,26 @@ function RootStack() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Cinzel_400Regular, Cinzel_700Bold, YatraOne_400Regular, Mukta_400Regular, Mukta_500Medium, Mukta_600SemiBold, Mukta_700Bold,
+    Cinzel_400Regular,
+    Cinzel_700Bold,
+    YatraOne_400Regular,
+    Mukta_400Regular,
+    Mukta_500Medium,
+    Mukta_600SemiBold,
+    Mukta_700Bold,
   });
   const [langReady, setLangReady] = useState(false);
-  useEffect(() => { restoreLanguage().finally(() => setLangReady(true)); }, []);
+  useEffect(() => {
+    restoreLanguage().finally(() => setLangReady(true));
+  }, []);
 
   if ((!fontsLoaded && !fontError) || !langReady) return null;
   return (
     <SafeAreaProvider>
-      <AuthProvider>
+      <ProfileProvider>
         <StatusBar style="light" />
         <RootStack />
-      </AuthProvider>
+      </ProfileProvider>
     </SafeAreaProvider>
   );
 }

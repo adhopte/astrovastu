@@ -3,8 +3,8 @@ import { View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
-import { useApi } from "@/lib/useApi";
+import { getConsultation, logActivity } from "@/lib/store";
+import { useLocal } from "@/lib/useApi";
 import { currentLang } from "@/i18n";
 import { colors, gradients, radius, space } from "@/lib/theme";
 import { Button, Card, ErrorView, Loading, Row, Screen, Segmented, SectionTitle } from "@/components/ui";
@@ -18,7 +18,11 @@ export default function CombinedScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<"vastu" | "astro">("vastu");
-  const { data, error, loading, reload } = useApi(() => api.consultation(id, currentLang()), [id, i18n.language]);
+  const { data, error, loading, reload } = useLocal(() => {
+    const detail = getConsultation(id, currentLang());
+    if (detail) logActivity("consultation.view", { type: "consultation", id });
+    return detail;
+  }, [id, i18n.language]);
   if (loading && !data) return <Screen scroll={false}><Loading /></Screen>;
   if (error || !data) return <Screen scroll={false}><ErrorView message={error ?? t("common.error")} onRetry={reload} /></Screen>;
   const { kundali, vastu, combined } = data;
@@ -58,7 +62,7 @@ export default function CombinedScreen() {
       <Segmented value={tab} onChange={setTab} options={[{ value: "vastu", label: t("history.vastu") }, { value: "astro", label: t("history.astro") }]} />
       {tab === "vastu" && vastu && (
         <>
-          <VastuReportView vastuId={vastu.id} title={vastu.title} hasImage={vastu.hasImage} input={vastu.input} report={vastu.report} />
+          <VastuReportView title={vastu.title} hasImage={vastu.hasImage} imageUri={vastu.imageUri} input={vastu.input} report={vastu.report} />
           <Button kind="outline" title={t("both.openVastu")} onPress={() => router.push(`/vastu/${vastu.id}`)} />
         </>
       )}

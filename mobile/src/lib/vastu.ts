@@ -1,11 +1,11 @@
+// UI-only constants (colours) plus a thin wrapper around the domain grid
+// maths, used for the live marker preview while tagging rooms.
+import { locate, ZONE_ELEMENT, ZONES } from "@/domain/vastu/grid";
 import { colors } from "./theme";
-import type { ElementName, Rating, RoomType, Zone } from "./types";
+import type { Rating, RoomType, ZoneOrCenter } from "./types";
 
-export const ZONES: Zone[] = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-export const ZONE_ELEMENT: Record<Zone, ElementName> = {
-  N: "water", NNE: "water", NE: "water", ENE: "air", E: "air", ESE: "air", SE: "fire", SSE: "fire",
-  S: "fire", SSW: "earth", SW: "earth", WSW: "earth", W: "space", WNW: "space", NW: "air", NNW: "water",
-};
+export { ZONES, ZONE_ELEMENT };
+
 export const ROOM_TYPES: RoomType[] = ["entrance", "living", "kitchen", "masterBedroom", "bedroom", "toilet", "pooja", "dining", "study", "staircase", "store"];
 
 export const ROOM_COLOR: Record<RoomType, string> = {
@@ -21,15 +21,7 @@ export const RATING_COLOR: Record<Rating, { fg: string; bg: string }> = {
   bad: { fg: colors.sindoor, bg: colors.sindoorSoft },
 };
 
-/** Same maths as the backend (vastu/grid.ts) so the live preview matches the analysis. */
-export function locateZone(x: number, y: number, center: { x: number; y: number }, northAngle: number, aspectRatio: number): Zone | "C" {
-  const w = aspectRatio >= 1 ? 1 : aspectRatio;
-  const h = aspectRatio >= 1 ? 1 / aspectRatio : 1;
-  const scale = 1 / Math.min(w, h);
-  const dx = (x - center.x) * w * scale;
-  const dy = (y - center.y) * h * scale;
-  if (Math.hypot(dx, dy) < 0.12) return "C";
-  const imageAngle = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;
-  const bearing = (imageAngle - northAngle + 360) % 360;
-  return ZONES[Math.floor(((bearing + 11.25) % 360) / 22.5) % 16];
+/** Same maths as the analysis engine (src/domain/vastu/grid.ts) so the live preview matches the saved report. */
+export function locateZone(x: number, y: number, center: { x: number; y: number }, northAngle: number, aspectRatio: number): ZoneOrCenter {
+  return locate({ x, y }, { center, northAngle, aspectRatio }).zone;
 }

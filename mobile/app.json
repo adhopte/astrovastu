@@ -7,11 +7,10 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "description": "Vedic astrology (Jyotish) and Vastu Shastra guidance in English, Hindi and Marathi.",
+    "description": "Offline Vedic astrology (Jyotish) and Vastu Shastra guidance in English, Hindi and Marathi.",
     "ios": {
       "bundleIdentifier": "com.astrovastu.app",
       "supportsTablet": true,
-      "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Choose a floor plan of your home for Vastu analysis.",
         "NSCameraUsageDescription": "Take a photo of your floor plan for Vastu analysis."
@@ -44,10 +43,7 @@
           "backgroundColor": "#FFF3DC"
         }
       ],
-      "expo-secure-store",
       "expo-localization",
-      "expo-web-browser",
-      "expo-apple-authentication",
       "@react-native-community/datetimepicker",
       [
         "expo-image-picker",
@@ -55,13 +51,11 @@
           "photosPermission": "Choose a floor plan of your home for Vastu analysis.",
           "cameraPermission": "Take a photo of your floor plan for Vastu analysis."
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": false
-    },
-    "extra": {
-      "apiUrl": "http://localhost:4000"
     }
   }
 }

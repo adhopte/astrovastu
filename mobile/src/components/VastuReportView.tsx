@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
 import { colors, radius, space } from "@/lib/theme";
 import { RATING_COLOR, ROOM_COLOR } from "@/lib/vastu";
 import type { VastuInput, VastuReport, Zone } from "@/lib/types";
@@ -9,7 +8,6 @@ import { Badge, Card, Chip, Row, ScoreRing, SectionTitle } from "./ui";
 import { Txt } from "./Txt";
 import { Icon } from "./Icon";
 import { PlanCanvas } from "./PlanCanvas";
-import { useAuthedImage } from "./useAuthedImage";
 
 const STATUS_STYLE = {
   good: { color: colors.tulsi, bg: colors.tulsiSoft },
@@ -18,13 +16,12 @@ const STATUS_STYLE = {
   empty: { color: colors.inkMuted, bg: colors.sandal },
 } as const;
 
-export function VastuReportView({ vastuId, title, hasImage, input, report, localImageUri }: {
-  vastuId: string; title: string; hasImage: boolean; input: VastuInput; report: VastuReport; localImageUri?: string | null;
+export function VastuReportView({ title, hasImage, imageUri, input, report }: {
+  title: string; hasImage: boolean; imageUri: string | null; input: VastuInput; report: VastuReport;
 }) {
   const { t } = useTranslation();
   const [showGrid, setShowGrid] = useState(true);
-  const remote = useAuthedImage(hasImage && !localImageUri ? api.vastuImageUrl(vastuId) : null);
-  const source = localImageUri ? { uri: localImageUri } : remote;
+  const source = imageUri ? { uri: imageUri } : null;
   const statuses = Object.fromEntries(report.zones.map((z) => [z.zone, z.status])) as Record<Zone, "good" | "neutral" | "afflicted" | "empty">;
 
   return (
@@ -39,7 +36,7 @@ export function VastuReportView({ vastuId, title, hasImage, input, report, local
       </Card>
 
       <SectionTitle title={t("vastu.grid")} right={<Chip label={t("vastu.showGrid")} active={showGrid} onPress={() => setShowGrid(!showGrid)} />} />
-      {hasImage || localImageUri ? (
+      {hasImage ? (
         <PlanCanvas source={source} aspectRatio={input.grid.aspectRatio} center={input.grid.center} northAngle={input.grid.northAngle} rooms={input.rooms} statuses={statuses} showGrid={showGrid} />
       ) : (
         <PlanCanvas source={null} aspectRatio={1} center={input.grid.center} northAngle={input.grid.northAngle} rooms={input.rooms} statuses={statuses} />

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
-import { useApi, errorMessage } from "@/lib/useApi";
+import { deleteKundali, deleteVastu, listActivity, listConsultations, listKundalis, listVastu } from "@/lib/store";
+import { useLocal } from "@/lib/useApi";
 import { fmtBirth, fmtDate, fmtDateTime } from "@/lib/format";
 import { currentLang } from "@/i18n";
 import { colors, radius, space } from "@/lib/theme";
@@ -15,7 +15,7 @@ import { ConsultationRow } from "@/components/ConsultationRow";
 
 type Tab = "consultations" | "kundalis" | "plans" | "activity";
 
-const ACTION_ICON: Record<string, IconName> = { auth: "user", kundali: "planet", vastu: "compass", consultation: "sparkle", profile: "user", account: "user" };
+const ACTION_ICON: Record<string, IconName> = { profile: "user", kundali: "planet", vastu: "compass", consultation: "sparkle", data: "trash" };
 
 function Empty() {
   const { t } = useTranslation();
@@ -30,29 +30,27 @@ function confirmDelete(t: (k: string) => string, onYes: () => void) {
 }
 
 function Consultations() {
-  const { data, error, loading, reload } = useApi(() => api.consultations(), [], { refetchOnFocus: true });
+  const { data, error, loading, reload } = useLocal(() => listConsultations(), [], { refetchOnFocus: true });
   if (loading && !data) return <Loading />;
   if (error) return <ErrorView message={error} onRetry={reload} />;
-  if (!data?.items.length) return <Empty />;
-  return <Card style={{ paddingVertical: space.sm }}>{data.items.map((c) => <ConsultationRow key={c.id} item={c} />)}</Card>;
+  if (!data?.length) return <Empty />;
+  return <Card style={{ paddingVertical: space.sm }}>{data.map((c) => <ConsultationRow key={c.id} item={c} />)}</Card>;
 }
 
 function Kundalis() {
   const { t } = useTranslation();
   const lang = currentLang();
-  const { data, error, loading, reload, setData } = useApi(() => api.kundalis(), [], { refetchOnFocus: true });
+  const { data, error, loading, reload, setData } = useLocal(() => listKundalis(), [], { refetchOnFocus: true });
   if (loading && !data) return <Loading />;
   if (error) return <ErrorView message={error} onRetry={reload} />;
-  if (!data?.items.length) return <Empty />;
-  const remove = (id: string) => confirmDelete(t, async () => {
-    try {
-      await api.deleteKundali(id);
-      setData({ items: data.items.filter((k) => k.id !== id) });
-    } catch (e) { Alert.alert(t("common.error"), errorMessage(e, t)); }
+  if (!data?.length) return <Empty />;
+  const remove = (id: string) => confirmDelete(t, () => {
+    deleteKundali(id);
+    setData(data.filter((k) => k.id !== id));
   });
   return (
     <View style={{ gap: space.md }}>
-      {data.items.map((k) => {
+      {data.map((k) => {
         const b = fmtBirth(k.birthDate, k.birthTime, lang);
         return (
           <Card key={k.id} accent={colors.saffron} onPress={() => router.push(`/astro/${k.id}`)}>
@@ -74,19 +72,17 @@ function Kundalis() {
 function Plans() {
   const { t } = useTranslation();
   const lang = currentLang();
-  const { data, error, loading, reload, setData } = useApi(() => api.vastuList(), [], { refetchOnFocus: true });
+  const { data, error, loading, reload, setData } = useLocal(() => listVastu(), [], { refetchOnFocus: true });
   if (loading && !data) return <Loading />;
   if (error) return <ErrorView message={error} onRetry={reload} />;
-  if (!data?.items.length) return <Empty />;
-  const remove = (id: string) => confirmDelete(t, async () => {
-    try {
-      await api.deleteVastu(id);
-      setData({ ...data, items: data.items.filter((k) => k.id !== id) });
-    } catch (e) { Alert.alert(t("common.error"), errorMessage(e, t)); }
+  if (!data?.length) return <Empty />;
+  const remove = (id: string) => confirmDelete(t, () => {
+    deleteVastu(id);
+    setData(data.filter((k) => k.id !== id));
   });
   return (
     <View style={{ gap: space.md }}>
-      {data.items.map((v) => (
+      {data.map((v) => (
         <Card key={v.id} accent={scoreColor(v.score)} onPress={() => router.push(`/vastu/${v.id}`)}>
           <Row>
             <View style={[styles.score, { borderColor: scoreColor(v.score) }]}><Txt variant="bodyBold" color={scoreColor(v.score)}>{v.score}</Txt></View>
@@ -102,29 +98,30 @@ function Plans() {
   );
 }
 
+const PAGE = 30;
+
 function Activity() {
   const { t } = useTranslation();
   const lang = currentLang();
   const [items, setItems] = useState<ActivityItem[]>([]);
-  const [cursor, setCursor] = useState<number | null>(null);
-  const [more, setMore] = useState(false);
-  const first = useApi(async () => {
-    const r = await api.activity();
-    setItems(r.items);
-    setCursor(r.nextCursor);
-    return r;
-  }, [], { refetchOnFocus: true });
+  const first = useLocal(
+    () => {
+      const r = listActivity(PAGE);
+      setItems(r.items);
+      return r;
+    },
+    [],
+    { refetchOnFocus: true },
+  );
+  const cursor = first.data?.nextCursor ?? null;
   if (first.loading && !first.data) return <Loading />;
   if (first.error) return <ErrorView message={first.error} onRetry={first.reload} />;
   if (!items.length) return <Empty />;
-  const loadMore = async () => {
+  const loadMore = () => {
     if (!cursor) return;
-    setMore(true);
-    try {
-      const r = await api.activity(cursor);
-      setItems((prev) => [...prev, ...r.items]);
-      setCursor(r.nextCursor);
-    } finally { setMore(false); }
+    const r = listActivity(PAGE, cursor);
+    setItems((prev) => [...prev, ...r.items]);
+    first.setData(r);
   };
   return (
     <View>
@@ -143,7 +140,7 @@ function Activity() {
           </View>
         </View>
       ))}
-      {cursor ? <Button kind="outline" title={t("history.loadMore")} onPress={loadMore} loading={more} /> : null}
+      {cursor ? <Button kind="outline" title={t("history.loadMore")} onPress={loadMore} /> : null}
     </View>
   );
 }

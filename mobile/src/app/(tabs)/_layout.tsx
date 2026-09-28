@@ -1,14 +1,14 @@
 import { Redirect } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/lib/auth";
+import { useProfile } from "@/lib/profile";
 import { colors, fonts } from "@/lib/theme";
 import { Icon } from "@/components/Icon";
 
 export default function TabsLayout() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
-  if (!user) return <Redirect href="/login" />;
+  const { profile } = useProfile();
+  if (!profile) return <Redirect href="/welcome" />;
   const titleFont = i18n.language === "en" ? fonts.latinDisplay : fonts.devanagariDisplay;
   return (
     <Tabs

@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next";
 import { fmtBirth, fmtDate, fmtDegree } from "@/lib/format";
 import { currentLang } from "@/i18n";
 import { colors, radius, space } from "@/lib/theme";
-import type { AiReading, Chart, Dignity, KundaliReport } from "@/lib/types";
-import { Badge, Button, Card, Row, Segmented, SectionTitle, Stars } from "./ui";
+import type { Chart, Dignity, KundaliReport } from "@/lib/types";
+import { Badge, Card, Row, Segmented, SectionTitle, Stars } from "./ui";
 import { Txt } from "./Txt";
 import { Icon } from "./Icon";
 import { KundaliChart } from "./KundaliChart";
@@ -137,37 +137,9 @@ function Section({ title, rating, paragraphs, initiallyOpen }: { title: string; 
   );
 }
 
-function AiCard({ reading, available, onGenerate, busy }: { reading: AiReading | null; available: boolean; onGenerate?: () => void; busy?: boolean }) {
-  const { t } = useTranslation();
-  if (!reading && !available) return null;
-  return (
-    <Card style={{ borderColor: colors.gold, backgroundColor: colors.goldPale }}>
-      <Row><Icon name="sparkle" color={colors.saffronDeep} /><Txt variant="heading" style={{ flex: 1 }}>{t("kundali.aiTitle")}</Txt></Row>
-      {reading ? (
-        <>
-          <Txt>{reading.overview}</Txt>
-          {reading.highlights.map((h, i) => (
-            <View key={i} style={{ gap: 2 }}>
-              <Txt variant="subheading" color={colors.maroon}>{h.title}</Txt>
-              <Txt>{h.text}</Txt>
-            </View>
-          ))}
-          <Txt variant="subheading" color={colors.maroon}>{t("kundali.aiYear")}</Txt>
-          <Txt>{reading.yearAhead}</Txt>
-          <Txt variant="subheading" color={colors.maroon}>{t("kundali.aiGuidance")}</Txt>
-          {reading.guidance.map((g, i) => <Txt key={i}>🪔 {g}</Txt>)}
-        </>
-      ) : (
-        <Button kind="secondary" icon="sparkle" title={t("kundali.aiButton")} onPress={onGenerate} loading={busy} />
-      )}
-    </Card>
-  );
-}
-
-function PredictionsTab({ report, ai }: { report: KundaliReport; ai?: AiProps }) {
+function PredictionsTab({ report }: { report: KundaliReport }) {
   return (
     <>
-      {ai ? <AiCard reading={ai.reading} available={ai.available} onGenerate={ai.onGenerate} busy={ai.busy} /> : null}
       {report.sections.map((s, i) => <Section key={s.key} title={s.title} rating={s.rating} paragraphs={s.paragraphs} initiallyOpen={i === 0} />)}
       <Txt variant="caption" center style={{ paddingHorizontal: space.md }}>{report.disclaimer}</Txt>
     </>
@@ -248,9 +220,7 @@ function MoreTab({ report }: { report: KundaliReport }) {
   );
 }
 
-interface AiProps { reading: AiReading | null; available: boolean; onGenerate?: () => void; busy?: boolean }
-
-export function KundaliReportView({ chart, report, name, ai }: { chart: Chart; report: KundaliReport; name: string; ai?: AiProps }) {
+export function KundaliReportView({ chart, report, name }: { chart: Chart; report: KundaliReport; name: string }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("predictions");
   return (
@@ -270,7 +240,7 @@ export function KundaliReportView({ chart, report, name, ai }: { chart: Chart; r
       />
       {tab === "chart" && <ChartTab chart={chart} report={report} />}
       {tab === "planets" && <PlanetsTab chart={chart} report={report} />}
-      {tab === "predictions" && <PredictionsTab report={report} ai={ai} />}
+      {tab === "predictions" && <PredictionsTab report={report} />}
       {tab === "dasha" && <DashaTab report={report} />}
       {tab === "more" && <MoreTab report={report} />}
     </>

@@ -1,7 +1,7 @@
 import { Redirect } from "expo-router";
-import { useAuth } from "@/lib/auth";
+import { useProfile } from "@/lib/profile";
 
 export default function Index() {
-  const { user } = useAuth();
-  return <Redirect href={user ? "/(tabs)" : "/login"} />;
+  const { profile } = useProfile();
+  return <Redirect href={profile ? "/(tabs)" : "/welcome"} />;
 }

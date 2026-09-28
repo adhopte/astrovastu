@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Alert, View } from "react-native";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
-import { errorMessage, useApi } from "@/lib/useApi";
+import { createCombinedConsultation, listKundalis, listVastu, logActivity } from "@/lib/store";
+import { errorMessage, useLocal } from "@/lib/useApi";
 import { fmtBirth, fmtDate } from "@/lib/format";
 import { currentLang } from "@/i18n";
 import { colors, space } from "@/lib/theme";
@@ -24,19 +24,20 @@ export default function NewCombined() {
   const [kMode, setKMode] = useState<"new" | "saved">("new");
   const [vMode, setVMode] = useState<"new" | "saved">("new");
   const [busy, setBusy] = useState(false);
-  const saved = useApi(() => Promise.all([api.kundalis(), api.vastuList()]), []);
-  const kundalis = saved.data?.[0].items ?? [];
-  const plans = saved.data?.[1].items ?? [];
+  const saved = useLocal(() => ({ kundalis: listKundalis(), plans: listVastu() }), []);
+  const kundalis = saved.data?.kundalis ?? [];
+  const plans = saved.data?.plans ?? [];
 
   const submit = async (vastu: VastuDraft | { vastuId: string }) => {
     if (!birth) return;
     setBusy(true);
     try {
       const b = "kundaliId" in birth ? { kundaliId: birth.kundaliId } : birth;
-      const res = await api.consultBoth(b, vastu);
+      const res = await createCombinedConsultation(b, vastu);
+      logActivity("consultation.create", { type: "consultation", id: res.id }, { kind: "both" });
       router.replace(`/both/${res.id}`);
     } catch (e) {
-      Alert.alert(t("common.error"), errorMessage(e, t));
+      Alert.alert(t("common.error"), errorMessage(e));
     } finally {
       setBusy(false);
     }
