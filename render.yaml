@@ -6,6 +6,22 @@
 # After it deploys, Render gives you a URL like
 # https://astrovastu-api.onrender.com — that's what you pass as `api_url`
 # when running the "Build Android APK" GitHub Action.
+#
+# IMPORTANT — free plan has no persistent disk:
+# Render's free web services only get an ephemeral filesystem. The SQLite
+# database and any uploaded floor-plan images are wiped every time the
+# service redeploys, and also whenever it spins back up after going idle
+# (free services sleep after ~15 minutes with no traffic, and wake up as a
+# fresh container on the next request). That's fine for trying the app out,
+# but any accounts/kundalis/vastu plans created will disappear sooner or
+# later. There's no way to make storage persistent on the free plan.
+#
+# When you're ready for real users' data to stick around, switch `plan`
+# below to `starter` (or higher) and add a `disk` block, e.g.:
+#   disk:
+#     name: astrovastu-data
+#     mountPath: /data
+#     sizeGB: 1
 services:
   - type: web
     name: astrovastu-api
@@ -14,18 +30,9 @@ services:
     dockerContext: ./backend
     plan: free
     healthCheckPath: /health
-    autoDeployTrigger: commit
-    disk:
-      name: astrovastu-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_PATH
-        value: /data/astrovastu.db
-      - key: UPLOAD_DIR
-        value: /data/uploads
       # Render auto-generates and stores a strong random value for this.
       - key: JWT_SECRET
         generateValue: true
