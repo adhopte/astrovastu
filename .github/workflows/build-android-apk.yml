@@ -32,13 +32,19 @@ jobs:
       - name: Generate native Android project (expo prebuild)
         run: npx expo prebuild --platform android --no-install
 
-      - name: Build debug APK
+      # A "release" build type here (still signed with the auto-generated debug
+      # keystore, not a Play Store key) is what actually installs and runs
+      # standalone. A debug APK expects to fetch its JavaScript live from a
+      # Metro dev server on your computer and errors with "Unable to load
+      # script" the moment it's installed on its own — this bundles the JS
+      # into the APK instead, via Hermes, exactly like assembleDebug does not.
+      - name: Build release APK
         working-directory: mobile/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: astrovastu-debug-apk
-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          name: astrovastu-apk
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
