@@ -32,8 +32,21 @@ jobs:
       - name: Generate native Android project (expo prebuild)
         run: npx expo prebuild --platform android --no-install
 
-      # A "release" build type here (still signed with the auto-generated debug
-      # keystore, not a Play Store key) is what actually installs and runs
+      # Every build otherwise gets its own freshly auto-generated debug
+      # keystore, which means Android refuses to install a newer build over
+      # an older one ("App not installed" — same package name, different
+      # signing key). Caching this one file keeps every build on this branch
+      # signed identically: the first run generates it, every run after
+      # restores that same file so Gradle's ensureDebugKeystoreExists task
+      # (which only generates one when the file is missing) leaves it alone.
+      - name: Cache debug keystore (keeps every build's signature identical)
+        uses: actions/cache@v4
+        with:
+          path: mobile/android/app/debug.keystore
+          key: astrovastu-debug-keystore
+
+      # A "release" build type here (still signed with the debug keystore
+      # above, not a Play Store key) is what actually installs and runs
       # standalone. A debug APK expects to fetch its JavaScript live from a
       # Metro dev server on your computer and errors with "Unable to load
       # script" the moment it's installed on its own — this bundles the JS
